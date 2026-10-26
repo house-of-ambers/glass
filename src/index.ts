@@ -39,3 +39,4 @@ export function glass(el: HTMLElement, { profile = 'simplified', blur, thickness
 }
 export { glare, type GlareOptions } from './glare.js'
 export { bake, type BakeOptions } from './bake.js'
+export { tintOf, tintFrom } from './tint.js'

@@ -34,6 +34,16 @@ Or without JS, just classes:
 | `scale` / `--glass-scale` | `1` | wider rim, stronger rim and shine, realistic only: about 2.5 for a 55″ TV at 3 m |
 | class `glass--light` | | light themes: white body, amber sun glare, blue moon glare |
 
+### Tint from a logo
+
+```ts
+import { glass, tintFrom } from '@house-of-ambers/glass'
+
+glass(tile, { profile: 'realistic', tint: tintFrom(logo) }) // a Netflix tile glows red
+```
+
+`tintFrom(img)` averages the logo's colors weighted by alpha × chroma, so white or black backgrounds and gray type don't count. It returns `undefined` for a white or gray logo, and then no tint is set. The image must be same-origin. `tintOf(rgba)` does the same on raw pixels.
+
 ### Sun and moon glare
 
 For a screen that doesn't move (a TV on a wall, a kiosk), the realistic glass can catch glare where the sun and moon really are. The positions come from [chronochrome](https://github.com/chronochrome/chronochrome) `main`.
