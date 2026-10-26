@@ -31,6 +31,8 @@ Or without JS, just classes:
 | `blur` / `--blur` | `24px` | blur radius |
 | `thickness` / `--thickness` | `1` | blur multiplier, use ~0.5 for small pills |
 | `tint` / `--tint` | none | colored light inside the glass, realistic only, animatable |
+| `scale` / `--glass-scale` | `1` | wider rim, stronger rim and shine, realistic only: about 2.5 for a 55″ TV at 3 m |
+| class `glass--light` | | light themes: white body, amber sun glare, blue moon glare |
 
 ### Sun and moon glare
 
@@ -46,7 +48,14 @@ glare(document.documentElement, {
 })
 ```
 
-Each piece of glass lights up from the body that is above the horizon and in front of the screen. The sun's glare is warm. The moon's glare is cool and scales with how full the moon is. `glare()` computes once, so call it again on a timer to follow the sky.
+Each piece of glass lights up from the body that is above the horizon and in front of the screen:
+- The glare is a tight core, which reads as a reflection, inside a wide halo.
+- The rim turns its bright side toward the stronger light, through `--glare-angle`.
+- The sun's glare is warm, the moon's is cool and scales with how full the moon is.
+- `floor` (default `0.2`) is the minimum strength while a body is up and in front, so light from the side still shows.
+- On `glass--light`, white can't show on white, so the glare is amber and blue.
+
+`glare()` computes once, so call it again on a timer to follow the sky.
 
 Blur needs something behind the element. Without `backdrop-filter` and without a baked backdrop, the body becomes an opaque fill. Shine, rim and glare still show on top.
 

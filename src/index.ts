@@ -9,6 +9,8 @@ export interface GlassOptions {
   thickness?: number
   /** Colored light inside the glass, any CSS color. Realistic profile only. */
   tint?: string
+  /** Rim width and rim/shine strength, ~2.5 for a 55" TV at 3 m. Realistic profile only. Default: 1. */
+  scale?: number
 }
 
 /**
@@ -16,13 +18,14 @@ export interface GlassOptions {
  * `import '@house-of-ambers/glass/glass.css'`.
  * Returns a function that puts the element back the way it was.
  */
-export function glass(el: HTMLElement, { profile = 'simplified', blur, thickness, tint }: GlassOptions = {}): () => void {
+export function glass(el: HTMLElement, { profile = 'simplified', blur, thickness, tint, scale }: GlassOptions = {}): () => void {
   const classes = (profile === 'realistic' ? ['glass', 'glass--realistic'] : ['glass'])
     .filter(c => !el.classList.contains(c))
   const vars = Object.entries({
     '--blur': blur === undefined ? undefined : `${blur}px`,
     '--thickness': thickness?.toString(),
     '--tint': tint,
+    '--glass-scale': scale?.toString(),
   }).filter((e): e is [string, string] => e[1] !== undefined)
   const prev = vars.map(([k]) => [k, el.style.getPropertyValue(k)] as const)
 
