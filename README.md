@@ -39,8 +39,11 @@ For a screen that doesn't move (a TV on a wall, a kiosk), the realistic glass ca
 ```ts
 import { glare } from '@house-of-ambers/glass'
 
-// heading = true compass bearing the screen faces (magnetic reading + local declination)
-glare(document.documentElement, { latitude: 57.63, longitude: 39.88, heading: 272 })
+glare(document.documentElement, {
+  latitude: 57.63,
+  longitude: 39.88,
+  viewerHeading: 272, // where you look at the screen: true bearing, magnetic reading + local declination
+})
 ```
 
 Each piece of glass lights up from the body that is above the horizon and in front of the screen. The sun's glare is warm. The moon's glare is cool and scales with how full the moon is. `glare()` computes once, so call it again on a timer to follow the sky.

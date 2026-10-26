@@ -3,8 +3,8 @@ import { deviceLight, moonAgeDays, moonPhase, type DeviceLightVector } from '../
 export interface GlareOptions {
   latitude: number
   longitude: number
-  /** True compass bearing the screen faces, degrees (west wall: 270). Magnetic reading + local declination. */
-  heading: number
+  /** True compass bearing you look along when facing the screen, degrees (screen on an east wall, facing west: 90). Magnetic reading + local declination. */
+  viewerHeading: number
   /** Default: now. */
   at?: Date
 }
@@ -24,8 +24,8 @@ const place = (name: string, v: DeviceLightVector, k: number): [string, string][
  * Set it on any ancestor, e.g. `document.documentElement`, to light every glass piece.
  * Computed once for `at`; call again to follow the sky. Returns an undo.
  */
-export function glare(el: HTMLElement, { latitude, longitude, heading, at = new Date() }: GlareOptions): () => void {
-  const { sun, moon } = deviceLight({ at, latitude, longitude, heading })
+export function glare(el: HTMLElement, { latitude, longitude, viewerHeading, at = new Date() }: GlareOptions): () => void {
+  const { sun, moon } = deviceLight({ at, latitude, longitude, viewerHeading })
   const lit = (1 - Math.cos(2 * Math.PI * moonPhase(moonAgeDays(at)))) / 2
   const vars = [...place('sun', sun, 1), ...place('moon', moon, lit)]
   const prev = vars.map(([k]) => [k, el.style.getPropertyValue(k)] as const)
