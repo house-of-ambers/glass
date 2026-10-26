@@ -31,6 +31,18 @@ Or without JS, just classes:
 | `blur` / `--blur` | `24px` | blur radius |
 | `thickness` / `--thickness` | `1` | blur multiplier, use ~0.5 for small pills |
 | `tint` / `--tint` | none | colored light inside the glass, realistic only, animatable |
+| `scale` / `--glass-scale` | `1` | wider rim, stronger rim and shine, realistic only: about 2.5 for a 55″ TV at 3 m |
+| class `glass--light` | | light themes: white body, amber sun glare, blue moon glare |
+
+### Tint from a logo
+
+```ts
+import { glass, tintFrom } from '@house-of-ambers/glass'
+
+glass(tile, { profile: 'realistic', tint: tintFrom(logo) }) // a Netflix tile glows red
+```
+
+`tintFrom(img)` averages the logo's colors weighted by alpha × chroma, so white or black backgrounds and gray type don't count. It returns `undefined` for a white or gray logo, and then no tint is set. The image must be same-origin. `tintOf(rgba)` does the same on raw pixels.
 
 ### Sun and moon glare
 
@@ -39,17 +51,55 @@ For a screen that doesn't move (a TV on a wall, a kiosk), the realistic glass ca
 ```ts
 import { glare } from '@house-of-ambers/glass'
 
-// heading = true compass bearing the screen faces (magnetic reading + local declination)
-glare(document.documentElement, { latitude: 57.63, longitude: 39.88, heading: 272 })
+glare(document.documentElement, {
+  latitude: 57.63,
+  longitude: 39.88,
+  viewerHeading: 272, // where you look at the screen: true bearing, magnetic reading + local declination
+})
 ```
 
-Each piece of glass lights up from the body that is above the horizon and in front of the screen. The sun's glare is warm. The moon's glare is cool and scales with how full the moon is. `glare()` computes once, so call it again on a timer to follow the sky.
+Each piece of glass lights up from the body that is above the horizon and in front of the screen:
+- The glare is a tight core, which reads as a reflection, inside a wide halo.
+- The rim turns its bright side toward the stronger light, through `--glare-angle`.
+- The sun's glare is warm, the moon's is cool and scales with how full the moon is.
+- `floor` (default `0.2`) is the minimum strength while a body is up and in front, so light from the side still shows.
+- On `glass--light`, white can't show on white, so the glare is amber and blue.
 
-Blur needs something behind the element. Without `backdrop-filter` support the glass falls back to an opaque fill.
+`glare()` computes once, so call it again on a timer to follow the sky.
+
+Blur needs something behind the element. Without `backdrop-filter` and without a baked backdrop, the body becomes an opaque fill. Shine, rim and glare still show on top.
+
+### Old TV engines: baked frost
+
+Older TV browsers have no `backdrop-filter`: Samsung Tizen ≤ 5.5 and LG webOS ≤ 5 run Chromium 38–79. There, blur the page backdrop once and put the blurred copy under the glass:
+
+```ts
+import { bake } from '@house-of-ambers/glass'
+
+// the page shows `backdrop` sharp: body { background: url(backdrop.jpg) center / cover fixed }
+document.documentElement.style.setProperty('--glass-baked', `url(${await bake(backdrop, { blur: 24 })})`)
+el.classList.add('glass--baked')
+```
+
+`bake()` uses `ctx.filter` when the browser has it, Chromium 52 and later. Otherwise it downscales and stretches the image back. The class turns `backdrop-filter` off and draws the blurred copy as the bottom background layer, with `fixed` and `cover`, so it lines up with the sharp one behind.
+
+There are two limits:
+- The page backdrop must be sharp and drawn `center / cover fixed`. With nothing behind the glass, there's nothing to frost.
+- A `fixed` background doesn't stay fixed inside an ancestor with `transform`, so baked glass there is misaligned.
+
+| glass.css uses | First Chromium | Without it |
+|---|---|---|
+| `backdrop-filter` | 76 | `glass--baked`, or an opaque body |
+| `@property --tint` | 85 | `--tint` changes without a transition |
+| `mask-composite: exclude` | 120 | `-webkit-mask-composite: xor` draws the rim |
+| `calc()` inside `rgba()` | not checked on old engines | `--glare-*` and `--glass-scale` alphas need a JS port with concrete values |
+| `inset`, two-position color stops | 87, 71 | not used: `top/right/bottom/left` and `linear-gradient(#000, #000)` |
 
 ## Demos
 
 Open `demo/simplified.html` or `demo/realistic.html` in a browser.
+
+`demo/tv.html` is a 1920×1080 TV home screen with baked glass, glare, scale and logo tints. It has a toggle for the no-`backdrop-filter` path. It loads `dist/` as a module, so serve the repo over http: `npm run build && python3 -m http.server`, then open `/demo/tv.html`. The start state can be set in the hash, e.g. `#light&time=600&view=92&scale=1`.
 
 ## Develop
 

@@ -3,12 +3,17 @@
  *
  *   <div class="glass">…</div>                      simplified: flat frosted fill
  *   <div class="glass glass--realistic">…</div>     realistic: shine, lit rim, depth, grain
+ *   + glass--light                                  light themes: white body, amber sun and blue moon glare
+ *   + glass--baked                                  frost from a pre-blurred backdrop (--glass-baked, see bake())
+ *                                                   instead of backdrop-filter, for old TV engines
  *
  * Knobs (custom properties, set on the element or any ancestor):
  *   --blur       blur radius, default 24px
  *   --thickness  blur multiplier, e.g. 0.5 for small pills
  *   --tint       colored light inside the glass (realistic only), animatable
- *   --glare-sun, --glare-moon (+ -x, -y)   glare strength 0..1 and position (realistic only), set by glare()
+ *   --glass-baked   url() of the blurred page backdrop, for glass--baked
+ *   --glass-scale   rim width and rim/shine strength, ~2.5 for a 55" TV at 3 m (realistic only)
+ *   --glare-sun, --glare-moon (+ -x, -y), --glare-angle   glare strength 0..1, position and lit side of the rim (realistic only), set by glare()
  *
  * Blur needs something behind the element; on a flat background it looks like a plain fill.
  */
@@ -30,7 +35,8 @@
 
 /* ── Simplified ── */
 .glass {
-  background: rgba(255, 255, 255, 0.06);
+  --glass-under: none;
+  background: linear-gradient(rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06)), var(--glass-under);
   /* --thickness: smaller pieces are thinner glass and blur less */
   -webkit-backdrop-filter: blur(calc(var(--blur, 24px) * var(--thickness, 1))) saturate(180%);
   backdrop-filter: blur(calc(var(--blur, 24px) * var(--thickness, 1))) saturate(180%);
@@ -44,14 +50,21 @@
 /* ── Realistic ── */
 .glass--realistic {
   --tint: transparent;
+  --glass-body: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 100%); /* light from top-left */
+  --glare-sun-rgb: 255, 244, 220;  /* warm */
+  --glare-moon-rgb: 200, 215, 255; /* cool */
   position: relative;
   background:
-    radial-gradient(circle at var(--glare-sun-x, 50%) var(--glare-sun-y, 0%), rgba(255, 244, 220, calc(var(--glare-sun, 0) * 0.35)) 0%, transparent 60%),   /* sun glare, warm */
-    radial-gradient(circle at var(--glare-moon-x, 50%) var(--glare-moon-y, 0%), rgba(200, 215, 255, calc(var(--glare-moon, 0) * 0.15)) 0%, transparent 45%), /* moon glare, cool */
-    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 50%),              /* specular shine, top half */
+    /* glare: a tight core reads as a reflection, the wide halo as light */
+    radial-gradient(circle at var(--glare-sun-x, 50%) var(--glare-sun-y, 0%), rgba(var(--glare-sun-rgb), calc(var(--glare-sun, 0) * 0.9)) 0%, transparent 12%),
+    radial-gradient(circle at var(--glare-sun-x, 50%) var(--glare-sun-y, 0%), rgba(var(--glare-sun-rgb), calc(var(--glare-sun, 0) * 0.25)) 0%, transparent 60%),
+    radial-gradient(circle at var(--glare-moon-x, 50%) var(--glare-moon-y, 0%), rgba(var(--glare-moon-rgb), calc(var(--glare-moon, 0) * 0.7)) 0%, transparent 10%),
+    radial-gradient(circle at var(--glare-moon-x, 50%) var(--glare-moon-y, 0%), rgba(var(--glare-moon-rgb), calc(var(--glare-moon, 0) * 0.15)) 0%, transparent 45%),
+    linear-gradient(180deg, rgba(255, 255, 255, calc(0.12 * var(--glass-scale, 1))) 0%, transparent 50%), /* specular shine, top half */
     linear-gradient(135deg, var(--tint) 0%, transparent 75%),                            /* colored light inside */
     var(--grain),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 100%); /* body: light from top-left */
+    var(--glass-body),
+    var(--glass-under);
   -webkit-backdrop-filter: blur(calc(var(--blur, 24px) * var(--thickness, 1))) saturate(180%) brightness(1.08);
   backdrop-filter: blur(calc(var(--blur, 24px) * var(--thickness, 1))) saturate(180%) brightness(1.08);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -59,22 +72,41 @@
   transition: --tint 0.5s var(--ease-smooth), border-color 0.5s var(--ease-smooth), box-shadow 0.5s var(--ease-smooth);
 }
 
-/* Lit rim: bright top-left, dark sides, faint bounce light bottom-right */
+/* Lit rim: bright on the side the light comes from (--glare-angle, top-left by default), faint bounce opposite */
 .glass--realistic::before {
   content: '';
   position: absolute;
-  inset: 0;
-  padding: 1px;
+  top: 0; right: 0; bottom: 0; left: 0; /* not inset: Chromium < 87 */
+  padding: calc(1px * var(--glass-scale, 1));
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.08) 30%, transparent 55%, rgba(255, 255, 255, 0.2) 100%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  background: linear-gradient(var(--glare-angle, 135deg),
+    rgba(255, 255, 255, calc(0.5 * var(--glass-scale, 1))) 0%, rgba(255, 255, 255, calc(0.08 * var(--glass-scale, 1))) 30%,
+    transparent 55%, rgba(255, 255, 255, calc(0.2 * var(--glass-scale, 1))) 100%);
+  -webkit-mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
   -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
   mask-composite: exclude;
   pointer-events: none;
 }
 
-/* No backdrop-filter → more opaque so text stays readable */
+/* Light themes: white can't show on white, so the glare takes color */
+.glass--light {
+  --glass-body: linear-gradient(135deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.58) 100%);
+  --glare-sun-rgb: 220, 110, 0;   /* amber */
+  --glare-moon-rgb: 30, 80, 230;  /* blue */
+}
+
+/* Baked: the blurred backdrop, fixed to the viewport so it lines up with the sharp one behind.
+   Breaks inside transformed ancestors, where fixed backgrounds don't stay fixed. */
+.glass--baked {
+  --glass-under: var(--glass-baked, none) center / cover no-repeat fixed;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* No backdrop-filter and nothing baked → opaque body so text stays readable; shine, rim and glare stay */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass, .glass--realistic { background: rgba(20, 20, 24, 0.85); }
+  .glass:not(.glass--realistic):not(.glass--baked) { background: rgba(20, 20, 24, 0.85); }
+  .glass--realistic:not(.glass--baked) { --glass-body: linear-gradient(rgba(20, 20, 24, 0.85), rgba(20, 20, 24, 0.85)); }
+  .glass--light:not(.glass--baked) { --glass-body: linear-gradient(rgba(250, 250, 252, 0.92), rgba(250, 250, 252, 0.92)); }
 }

@@ -22,9 +22,9 @@ test('simplified by default, no vars', () => {
 
 test('realistic sets classes and vars, undo removes them', () => {
   const el = fakeEl()
-  const undo = glass(el, { profile: 'realistic', blur: 12, thickness: 0.5, tint: 'red' })
+  const undo = glass(el, { profile: 'realistic', blur: 12, thickness: 0.5, tint: 'red', scale: 2.5 })
   assert.deepEqual([...el.cls], ['glass', 'glass--realistic'])
-  assert.deepEqual(Object.fromEntries(el.props), { '--blur': '12px', '--thickness': '0.5', '--tint': 'red' })
+  assert.deepEqual(Object.fromEntries(el.props), { '--blur': '12px', '--thickness': '0.5', '--tint': 'red', '--glass-scale': '2.5' })
   undo()
   assert.equal(el.cls.size, 0)
   assert.equal(el.props.size, 0)
