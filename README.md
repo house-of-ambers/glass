@@ -99,6 +99,8 @@ There are two limits:
 
 Open `demo/simplified.html` or `demo/realistic.html` in a browser.
 
+`demo/tv.html` is a 1920×1080 TV home screen with baked glass, glare, scale and logo tints. It has a toggle for the no-`backdrop-filter` path. It loads `dist/` as a module, so serve the repo over http: `npm run build && python3 -m http.server`, then open `/demo/tv.html`. The start state can be set in the hash, e.g. `#light&time=600&view=92&scale=1`.
+
 ## Develop
 
 ```sh
