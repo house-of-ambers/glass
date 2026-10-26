@@ -8,6 +8,7 @@
  *   --blur       blur radius, default 24px
  *   --thickness  blur multiplier, e.g. 0.5 for small pills
  *   --tint       colored light inside the glass (realistic only), animatable
+ *   --glare-sun, --glare-moon (+ -x, -y)   glare strength 0..1 and position (realistic only), set by glare()
  *
  * Blur needs something behind the element; on a flat background it looks like a plain fill.
  */
@@ -45,6 +46,8 @@
   --tint: transparent;
   position: relative;
   background:
+    radial-gradient(circle at var(--glare-sun-x, 50%) var(--glare-sun-y, 0%), rgba(255, 244, 220, calc(var(--glare-sun, 0) * 0.35)) 0%, transparent 60%),   /* sun glare, warm */
+    radial-gradient(circle at var(--glare-moon-x, 50%) var(--glare-moon-y, 0%), rgba(200, 215, 255, calc(var(--glare-moon, 0) * 0.15)) 0%, transparent 45%), /* moon glare, cool */
     linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 50%),              /* specular shine, top half */
     linear-gradient(135deg, var(--tint) 0%, transparent 75%),                            /* colored light inside */
     var(--grain),

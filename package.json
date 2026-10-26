@@ -1,12 +1,12 @@
 {
   "name": "@house-of-ambers/glass",
   "version": "0.1.0",
-  "description": "Frosted glass for dark UIs: a stylesheet and a tiny TypeScript helper",
+  "description": "Frosted glass for dark UIs: a stylesheet and a tiny TypeScript helper, sun and moon glare via chronochrome",
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     },
     "./glass.css": "./dist/glass.css"
   },
@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc && cp src/glass.css dist/",
     "prepare": "npm run build",
-    "test": "npm run build && node --test"
+    "test": "npm run build && node --test 'test/*.test.mjs'"
   },
   "devDependencies": {
     "typescript": "^7.0.2"

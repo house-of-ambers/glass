@@ -1,0 +1,4 @@
+[submodule "vendor/chronochrome"]
+	path = vendor/chronochrome
+	url = https://github.com/chronochrome/chronochrome.git
+	branch = main

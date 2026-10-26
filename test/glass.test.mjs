@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { glass } from '../dist/index.js'
+import { glass } from '../dist/src/index.js'
 
 // Just enough of HTMLElement for glass(): classList + style custom properties
 function fakeEl(classes = [], vars = {}) {

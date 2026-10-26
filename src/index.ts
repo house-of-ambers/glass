@@ -34,3 +34,4 @@ export function glass(el: HTMLElement, { profile = 'simplified', blur, thickness
     for (const [k, v] of prev) v ? el.style.setProperty(k, v) : el.style.removeProperty(k)
   }
 }
+export { glare, type GlareOptions } from './glare.js'
