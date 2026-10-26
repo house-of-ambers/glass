@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glass Simplified</title>
+<style>
+  :root { --brand: #ffffff; }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { margin: 0; min-height: 100%; background: #000; color: #fff; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── Background: blur needs something behind the glass ── */
+  .scene { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+  .blob {
+    position: absolute;
+    width: 42vmax;
+    height: 42vmax;
+    border-radius: 50%;
+    opacity: 0.55;
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+  .blob:nth-child(1) { background: radial-gradient(circle, #7c3aed 0%, transparent 65%); top: -10%; left: -8%; }
+  .blob:nth-child(2) { background: radial-gradient(circle, #0ea5e9 0%, transparent 65%); bottom: -15%; right: -10%; animation-duration: 22s; animation-delay: -6s; }
+  .blob:nth-child(3) { background: radial-gradient(circle, var(--brand) 0%, transparent 60%); top: 30%; left: 35%; width: 30vmax; height: 30vmax; opacity: 0.35; transition: background 0.6s ease; animation-duration: 15s; animation-delay: -3s; }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(12vw, 8vh) scale(1.15); }
+    100% { transform: translate(-8vw, 14vh) scale(0.9); }
+  }
+
+  /* Sharp stripes behind the bar — makes the blur obvious */
+  .stripes {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 140vmax;
+    height: 140vmax;
+    margin: -70vmax 0 0 -70vmax;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 48px);
+    animation: spin 60s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Glass ── */
+  .glass {
+    background: rgba(255, 255, 255, 0.06);
+    -webkit-backdrop-filter: blur(var(--blur, 24px)) saturate(180%);
+    backdrop-filter: blur(var(--blur, 24px)) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),   /* top edge highlight */
+      inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+      0 10px 40px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  /* No backdrop-filter → more opaque so text stays readable */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass { background: rgba(20, 20, 24, 0.85); }
+  }
+
+  main { position: relative; z-index: 1; width: 100%; max-width: 576px; text-align: center; }
+
+  h1 { font-size: 3.75rem; font-weight: 100; letter-spacing: -0.025em; margin: 0 0 8px; color: rgba(255,255,255,0.9); user-select: none; }
+  .tagline { color: rgba(255,255,255,0.4); font-size: 0.875rem; letter-spacing: 0.05em; margin: 0 0 40px; }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    border-radius: 999px;
+    transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+  }
+  .search-bar:focus-within { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.09); }
+
+  .search-bar.matched {
+    background: color-mix(in srgb, var(--brand) 10%, rgba(255,255,255,0.05));
+    border-color: color-mix(in srgb, var(--brand) 55%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.18),
+      0 0 28px -8px color-mix(in srgb, var(--brand) 55%, transparent);
+  }
+
+  .icon { width: 20px; height: 20px; flex-shrink: 0; color: rgba(255,255,255,0.4); transition: color 0.5s, filter 0.5s; }
+  .matched .icon { color: var(--brand); filter: drop-shadow(0 0 8px var(--brand)); }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: rgba(255,255,255,0.9);
+    font: inherit;
+    font-size: 1rem;
+  }
+  input::placeholder { color: rgba(255,255,255,0.35); }
+  input:focus-visible { outline: none; }
+  .search-bar:has(input:focus-visible) { outline: 2px solid rgba(255,255,255,0.5); outline-offset: 3px; }
+
+  .hint { height: 20px; margin-top: 10px; font-size: 0.75rem; letter-spacing: 0.05em; color: color-mix(in srgb, var(--brand) 75%, white); }
+
+  .pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 40px; }
+  .pill {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.75rem;
+    color: color-mix(in srgb, var(--brand) 75%, white);
+    background: color-mix(in srgb, var(--brand) 8%, rgba(255,255,255,0.04));
+    border-color: color-mix(in srgb, var(--brand) 30%, transparent);
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.22, 1.4, 0.36, 1), opacity 0.4s, border-color 0.4s, background 0.4s, box-shadow 0.4s;
+  }
+  .pill:hover {
+    color: var(--brand);
+    border-color: color-mix(in srgb, var(--brand) 55%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 20px -6px color-mix(in srgb, var(--brand) 55%, transparent);
+  }
+  .pill.active {
+    color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 16%, rgba(255,255,255,0.05));
+    border-color: color-mix(in srgb, var(--brand) 55%, transparent);
+    transform: scale(1.06);
+  }
+  .pills.has-match .pill:not(.active) { opacity: 0.35; }
+
+  /* Animated brand underline, ported from blackhole's .service-pill__underline */
+  .pill { position: relative; overflow: hidden; }
+  .pill::after {
+    content: '';
+    position: absolute;
+    left: 18%;
+    right: 18%;
+    bottom: 3px;
+    height: 1.5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent 0%, var(--brand) 20%, var(--brand) 80%, transparent 100%);
+    transform: scaleX(0);
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease, left 0.45s ease, right 0.45s ease;
+    pointer-events: none;
+  }
+  .pill:hover::after { transform: scaleX(0.7); opacity: 0.45; }
+  .pill.active::after {
+    left: 12%;
+    right: 12%;
+    transform: scaleX(1);
+    opacity: 1;
+    animation: underline-breathe 2.4s ease-in-out 0.45s infinite;
+  }
+  @keyframes underline-breathe {
+    0%, 100% { opacity: 0.85; filter: brightness(1); }
+    50%      { opacity: 1;    filter: brightness(1.35); }
+  }
+
+  .control { margin-top: 48px; display: inline-flex; align-items: center; gap: 12px; padding: 8px 16px; border-radius: 999px; font-size: 0.75rem; color: rgba(255,255,255,0.6); }
+  .control input { flex: none; width: 140px; accent-color: #fff; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blob, .stripes, .pill.active::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="scene" aria-hidden="true">
+    <div class="stripes"></div>
+    <div class="blob"></div>
+    <div class="blob"></div>
+    <div class="blob"></div>
+  </div>
+
+  <main>
+    <h1>blackhole</h1>
+    <p class="tagline">paste a link to download</p>
+
+    <div class="search-bar glass" id="bar">
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+      </svg>
+      <input id="url" type="text" placeholder="Paste a link to download media..." aria-label="Media link">
+    </div>
+    <div class="hint" id="hint" aria-live="polite"></div>
+
+    <div class="pills" id="pills"></div>
+
+    <label class="control glass">
+      blur
+      <input id="blur" type="range" min="0" max="60" value="24">
+      <span id="blurValue">24px</span>
+    </label>
+  </main>
+
+<script>
+  const SERVICES = [
+    { id: 'instagram', name: 'Instagram', color: '#E1306C', host: /(^|\.)instagram\.com$/, sample: 'https://www.instagram.com/p/abc123/' },
+    { id: 'youtube',   name: 'YouTube',   color: '#FF3B30', host: /(^|\.)(youtube\.com|youtu\.be)$/, sample: 'https://youtu.be/dQw4w9WgXcQ' },
+    { id: 'x',         name: 'X',         color: '#E7E9EA', host: /(^|\.)(x\.com|twitter\.com)$/, sample: 'https://x.com/user/status/1' },
+    { id: 'tiktok',    name: 'TikTok',    color: '#25F4EE', host: /(^|\.)tiktok\.com$/, sample: 'https://www.tiktok.com/@user/video/1' },
+  ]
+
+  const root = document.documentElement
+  const bar = document.getElementById('bar')
+  const input = document.getElementById('url')
+  const hint = document.getElementById('hint')
+  const pills = document.getElementById('pills')
+
+  for (const svc of SERVICES) {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'pill glass'
+    b.textContent = svc.name
+    b.dataset.id = svc.id
+    b.style.setProperty('--brand', svc.color)
+    b.onclick = () => { input.value = svc.sample; update() }
+    pills.append(b)
+  }
+
+  function match(value) {
+    try {
+      const host = new URL(value.trim()).hostname
+      return SERVICES.find(s => s.host.test(host))
+    } catch { return undefined }
+  }
+
+  function update() {
+    const svc = match(input.value)
+    root.style.setProperty('--brand', svc ? svc.color : '#ffffff')
+    bar.classList.toggle('matched', !!svc)
+    pills.classList.toggle('has-match', !!svc)
+    for (const p of pills.children) p.classList.toggle('active', p.dataset.id === svc?.id)
+    hint.textContent = svc ? `${svc.name} ready` : ''
+  }
+
+  input.addEventListener('input', update)
+
+  const blur = document.getElementById('blur')
+  blur.addEventListener('input', () => {
+    root.style.setProperty('--blur', blur.value + 'px')
+    document.getElementById('blurValue').textContent = blur.value + 'px'
+  })
+</script>
+</body>
+</html>
