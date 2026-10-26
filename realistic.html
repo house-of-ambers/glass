@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glass Realistic</title>
+<style>
+  :root { --brand: #ffffff; }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { margin: 0; min-height: 100%; background: #000; color: #fff; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── Background: blur needs something behind the glass ── */
+  .scene { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+  .blob {
+    position: absolute;
+    width: 42vmax;
+    height: 42vmax;
+    border-radius: 50%;
+    opacity: 0.55;
+    animation: drift 18s ease-in-out infinite alternate;
+  }
+  .blob:nth-child(1) { background: radial-gradient(circle, #7c3aed 0%, transparent 65%); top: -10%; left: -8%; }
+  .blob:nth-child(2) { background: radial-gradient(circle, #0ea5e9 0%, transparent 65%); bottom: -15%; right: -10%; animation-duration: 22s; animation-delay: -6s; }
+  .blob:nth-child(3) { background: radial-gradient(circle, var(--brand) 0%, transparent 60%); top: 30%; left: 35%; width: 30vmax; height: 30vmax; opacity: 0.35; transition: background 0.6s ease; animation-duration: 15s; animation-delay: -3s; }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(12vw, 8vh) scale(1.15); }
+    100% { transform: translate(-8vw, 14vh) scale(0.9); }
+  }
+
+  /* Sharp stripes behind the bar — makes the blur obvious */
+  .stripes {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 140vmax;
+    height: 140vmax;
+    margin: -70vmax 0 0 -70vmax;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 48px);
+    animation: spin 60s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Glass (realistic) ── */
+  /* Registered so the tint can transition smoothly inside a gradient */
+  @property --tint { syntax: '<color>'; inherits: false; initial-value: transparent; }
+
+  :root {
+    --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Frosted micro-texture: fractal noise as faint white speckles */
+    --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    --glass-depth:
+      inset 0 1px 1px rgba(255, 255, 255, 0.22),  /* top edge catches light */
+      inset 0 -1px 1px rgba(0, 0, 0, 0.3),        /* bottom edge in shade */
+      inset 0 0 24px rgba(255, 255, 255, 0.04),   /* body thickness */
+      0 1px 2px rgba(0, 0, 0, 0.35),              /* contact shadow */
+      0 16px 40px -12px rgba(0, 0, 0, 0.65);      /* depth */
+  }
+
+  .glass {
+    --tint: transparent;
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 50%),              /* specular shine, top half */
+      linear-gradient(135deg, var(--tint) 0%, transparent 75%),                            /* colored light inside */
+      var(--grain),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 100%); /* body: light from top-left */
+    /* --thickness: smaller pieces are thinner glass and blur less */
+    -webkit-backdrop-filter: blur(calc(var(--blur, 24px) * var(--thickness, 1))) saturate(180%) brightness(1.08);
+    backdrop-filter: blur(calc(var(--blur, 24px) * var(--thickness, 1))) saturate(180%) brightness(1.08);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: var(--glass-depth);
+    transition: --tint 0.5s var(--ease-smooth), border-color 0.5s var(--ease-smooth), box-shadow 0.5s var(--ease-smooth);
+  }
+
+  /* Lit rim: bright top-left, dark sides, faint bounce light bottom-right */
+  .glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.08) 30%, transparent 55%, rgba(255, 255, 255, 0.2) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* No backdrop-filter → more opaque so text stays readable */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass { background: rgba(20, 20, 24, 0.85); }
+  }
+
+  main { position: relative; z-index: 1; width: 100%; max-width: 576px; text-align: center; }
+
+  h1 { font-size: 3.75rem; font-weight: 100; letter-spacing: -0.025em; margin: 0 0 8px; color: rgba(255,255,255,0.9); user-select: none; }
+  .tagline { color: rgba(255,255,255,0.4); font-size: 0.875rem; letter-spacing: 0.05em; margin: 0 0 40px; }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    border-radius: 999px;
+  }
+  .search-bar:focus-within { --tint: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+
+  .search-bar.matched {
+    --tint: color-mix(in srgb, var(--brand) 28%, transparent);
+    border-color: color-mix(in srgb, var(--brand) 45%, transparent);
+    box-shadow: var(--glass-depth), 0 0 32px -8px color-mix(in srgb, var(--brand) 55%, transparent);
+  }
+
+  .icon { width: 20px; height: 20px; flex-shrink: 0; color: rgba(255,255,255,0.4); transition: color 0.5s, filter 0.5s; }
+  .matched .icon { color: var(--brand); filter: drop-shadow(0 0 8px var(--brand)); }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: rgba(255,255,255,0.9);
+    font: inherit;
+    font-size: 1rem;
+  }
+  input::placeholder { color: rgba(255,255,255,0.35); }
+  input:focus-visible { outline: none; }
+  .search-bar:has(input:focus-visible) { outline: 2px solid rgba(255,255,255,0.5); outline-offset: 3px; }
+
+  .hint { height: 20px; margin-top: 10px; font-size: 0.75rem; letter-spacing: 0.05em; color: color-mix(in srgb, var(--brand) 75%, white); }
+
+  .pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 40px; }
+  .pill {
+    --thickness: 0.5;
+    --tint: color-mix(in srgb, var(--brand) 14%, transparent);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.75rem;
+    color: color-mix(in srgb, var(--brand) 75%, white);
+    border-color: color-mix(in srgb, var(--brand) 25%, transparent);
+    cursor: pointer;
+    transition: --tint 0.4s var(--ease-smooth), transform 0.4s cubic-bezier(0.22, 1.4, 0.36, 1), opacity 0.4s, border-color 0.4s, box-shadow 0.4s;
+  }
+  .pill:hover {
+    --tint: color-mix(in srgb, var(--brand) 24%, transparent);
+    color: var(--brand);
+    border-color: color-mix(in srgb, var(--brand) 50%, transparent);
+    box-shadow: var(--glass-depth), 0 0 20px -6px color-mix(in srgb, var(--brand) 55%, transparent);
+    transform: translateY(-1px);
+  }
+  .pill.active {
+    --tint: color-mix(in srgb, var(--brand) 34%, transparent);
+    color: var(--brand);
+    border-color: color-mix(in srgb, var(--brand) 55%, transparent);
+    transform: scale(1.06);
+  }
+  .pills.has-match .pill:not(.active) { opacity: 0.35; }
+
+  /* Animated brand underline, ported from blackhole's .service-pill__underline */
+  .pill { position: relative; overflow: hidden; }
+  .pill::after {
+    content: '';
+    position: absolute;
+    left: 18%;
+    right: 18%;
+    bottom: 3px;
+    height: 1.5px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent 0%, var(--brand) 20%, var(--brand) 80%, transparent 100%);
+    transform: scaleX(0);
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease, left 0.45s ease, right 0.45s ease;
+    pointer-events: none;
+  }
+  .pill:hover::after { transform: scaleX(0.7); opacity: 0.45; }
+  .pill.active::after {
+    left: 12%;
+    right: 12%;
+    transform: scaleX(1);
+    opacity: 1;
+    animation: underline-breathe 2.4s ease-in-out 0.45s infinite;
+  }
+  @keyframes underline-breathe {
+    0%, 100% { opacity: 0.85; filter: brightness(1); }
+    50%      { opacity: 1;    filter: brightness(1.35); }
+  }
+
+  .control { --thickness: 0.5; margin-top: 48px; display: inline-flex; align-items: center; gap: 12px; padding: 8px 16px; border-radius: 999px; font-size: 0.75rem; color: rgba(255,255,255,0.6); }
+  .control input { flex: none; width: 140px; accent-color: #fff; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blob, .stripes, .pill.active::after { animation: none; }
+    .pill:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="scene" aria-hidden="true">
+    <div class="stripes"></div>
+    <div class="blob"></div>
+    <div class="blob"></div>
+    <div class="blob"></div>
+  </div>
+
+  <main>
+    <h1>blackhole</h1>
+    <p class="tagline">paste a link to download</p>
+
+    <div class="search-bar glass" id="bar">
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+      </svg>
+      <input id="url" type="text" placeholder="Paste a link to download media..." aria-label="Media link">
+    </div>
+    <div class="hint" id="hint" aria-live="polite"></div>
+
+    <div class="pills" id="pills"></div>
+
+    <label class="control glass">
+      blur
+      <input id="blur" type="range" min="0" max="60" value="24">
+      <span id="blurValue">24px</span>
+    </label>
+  </main>
+
+<script>
+  const SERVICES = [
+    { id: 'instagram', name: 'Instagram', color: '#E1306C', host: /(^|\.)instagram\.com$/, sample: 'https://www.instagram.com/p/abc123/' },
+    { id: 'youtube',   name: 'YouTube',   color: '#FF3B30', host: /(^|\.)(youtube\.com|youtu\.be)$/, sample: 'https://youtu.be/dQw4w9WgXcQ' },
+    { id: 'x',         name: 'X',         color: '#E7E9EA', host: /(^|\.)(x\.com|twitter\.com)$/, sample: 'https://x.com/user/status/1' },
+    { id: 'tiktok',    name: 'TikTok',    color: '#25F4EE', host: /(^|\.)tiktok\.com$/, sample: 'https://www.tiktok.com/@user/video/1' },
+  ]
+
+  const root = document.documentElement
+  const bar = document.getElementById('bar')
+  const input = document.getElementById('url')
+  const hint = document.getElementById('hint')
+  const pills = document.getElementById('pills')
+
+  for (const svc of SERVICES) {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'pill glass'
+    b.textContent = svc.name
+    b.dataset.id = svc.id
+    b.style.setProperty('--brand', svc.color)
+    b.onclick = () => { input.value = svc.sample; update() }
+    pills.append(b)
+  }
+
+  function match(value) {
+    try {
+      const host = new URL(value.trim()).hostname
+      return SERVICES.find(s => s.host.test(host))
+    } catch { return undefined }
+  }
+
+  function update() {
+    const svc = match(input.value)
+    root.style.setProperty('--brand', svc ? svc.color : '#ffffff')
+    bar.classList.toggle('matched', !!svc)
+    pills.classList.toggle('has-match', !!svc)
+    for (const p of pills.children) p.classList.toggle('active', p.dataset.id === svc?.id)
+    hint.textContent = svc ? `${svc.name} ready` : ''
+  }
+
+  input.addEventListener('input', update)
+
+  const blur = document.getElementById('blur')
+  blur.addEventListener('input', () => {
+    root.style.setProperty('--blur', blur.value + 'px')
+    document.getElementById('blurValue').textContent = blur.value + 'px'
+  })
+</script>
+</body>
+</html>
